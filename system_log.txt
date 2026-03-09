@@ -1,0 +1,190 @@
+[Sortering] Terminal 1 registreret i sortering.
+[Sortering] Terminal 2 registreret i sortering.
+[Sortering] Terminal 3 registreret i sortering.
+[Terminal 1|SK202] Terminal ÅBNET - klar til boarding.
+[Sortering] Sorteringstråd startet - venter på bagage...
+[Terminal 2|DY415] Terminal ÅBNET - klar til boarding.
+[Terminal 1|SK202] Terminal-tråd startet.
+[Terminal 3|TK791] Terminal ÅBNET - klar til boarding.
+[Terminal 2|DY415] Terminal-tråd startet.
+[Terminal 3|TK791] Terminal-tråd startet.
+[Flyveplan] Tilføjede ny afgang EK007 til terminal 4.
+[Skranke 1] Skranke ÅBNET.
+[System] Skranke 1 tilføjet og åbnet.
+[Skranke 2] Skranke ÅBNET.
+[System] Skranke 2 tilføjet og åbnet.
+[Skranke 3] Skranke ÅBNET.
+[System] Skranke 3 tilføjet og åbnet.
+[Skranke 3] Registrerede bagage BAG0003 for passager 1003 (fly: DY415)
+[Skranke 2] Registrerede bagage BAG0002 for passager 1002 (fly: SK202)
+[Skranke 1] Registrerede bagage BAG0001 for passager 1001 (fly: SK202)
+[Skranke 2] Registrerede bagage BAG0005 for passager 1005 (fly: TK791)
+[Skranke 3] Registrerede bagage BAG0006 for passager 1006 (fly: SK202)
+[Skranke 1] Registrerede bagage BAG0004 for passager 1004 (fly: DY415)
+[Skranke 2] Registrerede bagage BAG0008 for passager 1008 (fly: DY415)
+[Skranke 3] Registrerede bagage BAG0009 for passager 1009 (fly: SK202)
+[Skranke 1] Registrerede bagage BAG0007 for passager 1007 (fly: TK791)
+[Skranke 2] Registrerede bagage BAG0011 for passager 1011 (fly: SK202)
+[Skranke 3] Registrerede bagage BAG0012 for passager 1012 (fly: DY415)
+[Skranke 1] Registrerede bagage BAG0010 for passager 1010 (fly: TK791)
+[Skranke 2] Sender bagage BAG0002 til sortering (ventetid: 0ms)
+[Skranke 2] Sender bagage BAG0005 til sortering (ventetid: 0ms)
+[Skranke 2] Sender bagage BAG0008 til sortering (ventetid: 0ms)
+[Skranke 2] Sender bagage BAG0011 til sortering (ventetid: 0ms)
+[Skranke 1] Sender bagage BAG0001 til sortering (ventetid: 0ms)
+[Skranke 1] Sender bagage BAG0004 til sortering (ventetid: 0ms)
+[Skranke 1] Sender bagage BAG0007 til sortering (ventetid: 0ms)
+[Skranke 1] Sender bagage BAG0010 til sortering (ventetid: 0ms)
+[Skranke 3] Sender bagage BAG0003 til sortering (ventetid: 0ms)
+[Skranke 3] Sender bagage BAG0006 til sortering (ventetid: 0ms)
+[Skranke 3] Sender bagage BAG0009 til sortering (ventetid: 0ms)
+[Skranke 3] Sender bagage BAG0012 til sortering (ventetid: 0ms)
+[Sortering] Sorterede bagage BAG0002 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] Loadede bagage BAG0002 på fly SK202 (passager: 1002)
+[Terminal 1|SK202] Bagage BAG0002 total rejsetid: 132ms
+[Sortering] Sorterede bagage BAG0005 → Terminal 3 (fly: TK791)
+[Terminal 3|TK791] Loadede bagage BAG0005 på fly TK791 (passager: 1005)
+[Terminal 3|TK791] Bagage BAG0005 total rejsetid: 369ms
+[Sortering] Sorterede bagage BAG0008 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] Loadede bagage BAG0008 på fly DY415 (passager: 1008)
+[Terminal 2|DY415] Bagage BAG0008 total rejsetid: 613ms
+[Sortering] Sorterede bagage BAG0011 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] Loadede bagage BAG0011 på fly SK202 (passager: 1011)
+[Terminal 1|SK202] Bagage BAG0011 total rejsetid: 855ms
+[Sortering] Sorterede bagage BAG0001 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] Loadede bagage BAG0001 på fly SK202 (passager: 1001)
+[Terminal 1|SK202] Bagage BAG0001 total rejsetid: 1180ms
+[Sortering] Sorterede bagage BAG0004 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] Loadede bagage BAG0004 på fly DY415 (passager: 1004)
+[Terminal 2|DY415] Bagage BAG0004 total rejsetid: 1424ms
+[Sortering] Sorterede bagage BAG0007 → Terminal 3 (fly: TK791)
+[Terminal 3|TK791] Loadede bagage BAG0007 på fly TK791 (passager: 1007)
+[Terminal 3|TK791] Bagage BAG0007 total rejsetid: 1670ms
+[Sortering] Sorterede bagage BAG0010 → Terminal 3 (fly: TK791)
+[Terminal 3|TK791] Loadede bagage BAG0010 på fly TK791 (passager: 1010)
+[Terminal 3|TK791] Bagage BAG0010 total rejsetid: 1913ms
+[Sortering] Sorterede bagage BAG0003 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] Loadede bagage BAG0003 på fly DY415 (passager: 1003)
+[Terminal 2|DY415] Bagage BAG0003 total rejsetid: 2239ms
+[Sortering] Sorterede bagage BAG0006 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] Loadede bagage BAG0006 på fly SK202 (passager: 1006)
+[Terminal 1|SK202] Bagage BAG0006 total rejsetid: 2482ms
+[Sortering] Sorterede bagage BAG0009 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] Loadede bagage BAG0009 på fly SK202 (passager: 1009)
+[Terminal 1|SK202] Bagage BAG0009 total rejsetid: 2725ms
+[Sortering] Sorterede bagage BAG0012 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] Loadede bagage BAG0012 på fly DY415 (passager: 1012)
+[Terminal 2|DY415] Bagage BAG0012 total rejsetid: 2968ms
+[Terminal 1|SK202] Stop-signal. Afslutter terminal-tråd.
+[Sortering] Stop-signal modtaget. Afslutter sorteringstråd.
+[Terminal 2|DY415] Stop-signal. Afslutter terminal-tråd.
+[Terminal 3|TK791] Stop-signal. Afslutter terminal-tråd.
+[Terminal 1|SK202] Terminal-tråd afsluttet.
+[Sortering] Sorteringstråd afsluttet.
+[Terminal 2|DY415] Terminal-tråd afsluttet.
+[Terminal 3|TK791] Terminal-tråd afsluttet.
+
+╔══════════════════════════════════════════╗
+║       BAGAGESORTERING STATISTIK          ║
+╠══════════════════════════════════════════╣
+║  Throughput:       0.05 bagage/sek        
+║  Gns. ventetid:    0.0 ms/bagage          
+║  Total behandlet:  12 stk                  
+║  Sorteret:         12 stk                  
+║  Loadet på fly:    12 stk                  
+╚══════════════════════════════════════════╝
+[Sortering] Terminal 1 registreret i sortering.
+[Sortering] Terminal 2 registreret i sortering.
+[Sortering] Terminal 3 registreret i sortering.
+[Terminal 1|SK202] Terminal ÅBNET - klar til boarding.
+[Sortering] Sorteringstråd startet - venter på bagage...
+[Terminal 2|DY415] Terminal ÅBNET - klar til boarding.
+[Terminal 1|SK202] Terminal-tråd startet.
+[Terminal 3|TK791] Terminal ÅBNET - klar til boarding.
+[Terminal 2|DY415] Terminal-tråd startet.
+[Terminal 3|TK791] Terminal-tråd startet.
+[Flyveplan] Tilføjede ny afgang EK007 til terminal 4.
+[Skranke 1] Skranke ÅBNET.
+[System] Skranke 1 tilføjet og åbnet.
+[Skranke 1] Behandler passager 1001 - pas & vejning... (547ms)
+[Skranke 1] ✓ Registrerede bagage BAG0001 for passager 1001 (fly: SK202)
+[Skranke 1] Behandler passager 1002 - pas & vejning... (381ms)
+[Skranke 1] ✓ Registrerede bagage BAG0002 for passager 1002 (fly: SK202)
+[Skranke 1] Behandler passager 1003 - pas & vejning... (596ms)
+[Skranke 1] ✓ Registrerede bagage BAG0003 for passager 1003 (fly: DY415)
+[Skranke 1] Behandler passager 1004 - pas & vejning... (866ms)
+[Skranke 1] ✓ Registrerede bagage BAG0004 for passager 1004 (fly: DY415)
+[Skranke 1] Behandler passager 1005 - pas & vejning... (414ms)
+[Skranke 1] ✓ Registrerede bagage BAG0005 for passager 1005 (fly: TK791)
+[Skranke 1] Behandler passager 1006 - pas & vejning... (806ms)
+[Skranke 1] ✓ Registrerede bagage BAG0006 for passager 1006 (fly: SK202)
+[Skranke 1] Behandler passager 1007 - pas & vejning... (810ms)
+[Skranke 1] ✓ Registrerede bagage BAG0007 for passager 1007 (fly: TK791)
+[Skranke 1] Behandler passager 1008 - pas & vejning... (526ms)
+[Skranke 1] ✓ Registrerede bagage BAG0008 for passager 1008 (fly: DY415)
+[Skranke 1] Behandler passager 1009 - pas & vejning... (526ms)
+[Skranke 1] ✓ Registrerede bagage BAG0009 for passager 1009 (fly: SK202)
+[Skranke 1] Behandler passager 1010 - pas & vejning... (371ms)
+[Skranke 1] ✓ Registrerede bagage BAG0010 for passager 1010 (fly: TK791)
+[Skranke 1] Behandler passager 1011 - pas & vejning... (391ms)
+[Skranke 1] ⚠ Buffer fuld! Kan ikke modtage bagage BAG0011. Kø: 10/10
+[Skranke 1] Behandler passager 1012 - pas & vejning... (300ms)
+[Skranke 1] ⚠ Buffer fuld! Kan ikke modtage bagage BAG0012. Kø: 10/10
+[Skranke 1] → Sortering [█░░░░░░░░░░░░░░░░░░░] 1/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [██░░░░░░░░░░░░░░░░░░] 2/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [███░░░░░░░░░░░░░░░░░] 3/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [████░░░░░░░░░░░░░░░░] 4/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [█████░░░░░░░░░░░░░░░] 5/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [██████░░░░░░░░░░░░░░] 6/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [███████░░░░░░░░░░░░░] 7/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [████████░░░░░░░░░░░░] 8/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [█████████░░░░░░░░░░░] 9/20 (ventetid: 0ms)
+[Skranke 1] → Sortering [██████████░░░░░░░░░░] 10/20 (ventetid: 0ms)
+[Sortering] Sorterede bagage BAG0001 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] ✈ Loadede bagage BAG0001 på fly SK202 (passager: 1001, loadtid: 50ms)
+[Terminal 1|SK202] Bagage BAG0001 total rejsetid: 7796ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0002 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] ✈ Loadede bagage BAG0002 på fly SK202 (passager: 1002, loadtid: 81ms)
+[Terminal 1|SK202] Bagage BAG0002 total rejsetid: 7549ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0003 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] ✈ Loadede bagage BAG0003 på fly DY415 (passager: 1003, loadtid: 65ms)
+[Terminal 2|DY415] Bagage BAG0003 total rejsetid: 7158ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0004 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] ✈ Loadede bagage BAG0004 på fly DY415 (passager: 1004, loadtid: 49ms)
+[Terminal 2|DY415] Bagage BAG0004 total rejsetid: 6524ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0005 → Terminal 3 (fly: TK791)
+[Terminal 3|TK791] ✈ Loadede bagage BAG0005 på fly TK791 (passager: 1005, loadtid: 114ms)
+[Terminal 3|TK791] Bagage BAG0005 total rejsetid: 6373ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0006 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] ✈ Loadede bagage BAG0006 på fly SK202 (passager: 1006, loadtid: 51ms)
+[Terminal 1|SK202] Bagage BAG0006 total rejsetid: 5625ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0007 → Terminal 3 (fly: TK791)
+[Terminal 3|TK791] ✈ Loadede bagage BAG0007 på fly TK791 (passager: 1007, loadtid: 116ms)
+[Terminal 3|TK791] Bagage BAG0007 total rejsetid: 5069ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0008 → Terminal 2 (fly: DY415)
+[Terminal 2|DY415] ✈ Loadede bagage BAG0008 på fly DY415 (passager: 1008, loadtid: 100ms)
+[Terminal 2|DY415] Bagage BAG0008 total rejsetid: 4829ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0009 → Terminal 1 (fly: SK202)
+[Terminal 1|SK202] ✈ Loadede bagage BAG0009 på fly SK202 (passager: 1009, loadtid: 50ms)
+[Terminal 1|SK202] Bagage BAG0009 total rejsetid: 4470ms [⚠ LANGSOM]
+[Sortering] Sorterede bagage BAG0010 → Terminal 3 (fly: TK791)
+[Terminal 3|TK791] ✈ Loadede bagage BAG0010 på fly TK791 (passager: 1010, loadtid: 68ms)
+[Terminal 3|TK791] Bagage BAG0010 total rejsetid: 4360ms [⚠ LANGSOM]
+[Terminal 1|SK202] Stop-signal. Afslutter terminal-tråd.
+[Terminal 2|DY415] Stop-signal. Afslutter terminal-tråd.
+[Terminal 1|SK202] Terminal-tråd afsluttet.
+[Terminal 2|DY415] Terminal-tråd afsluttet.
+[Sortering] Stop-signal modtaget. Afslutter sorteringstråd.
+[Terminal 3|TK791] Stop-signal. Afslutter terminal-tråd.
+[Sortering] Sorteringstråd afsluttet.
+[Terminal 3|TK791] Terminal-tråd afsluttet.
+
+╔══════════════════════════════════════════╗
+║       BAGAGESORTERING STATISTIK          ║
+╠══════════════════════════════════════════╣
+║  Throughput:       0.23 bagage/sek        
+║  Gns. ventetid:    0.0 ms/bagage          
+║  Total behandlet:  10 stk                  
+║  Sorteret:         10 stk                  
+║  Loadet på fly:    10 stk                  
+╚══════════════════════════════════════════╝
