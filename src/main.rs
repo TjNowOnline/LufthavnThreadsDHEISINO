@@ -1,8 +1,8 @@
-// ============================================================
+
 // Bagagesorteringssystem - Lufthavn Simulation i Rust
 // Bruger tråde (std::thread) og synkronisering (Arc<Mutex<T>>)
 // for at simulere et virkeligt bagageflow gennem en lufthavn.
-// ============================================================
+
 
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
@@ -12,12 +12,26 @@ use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread;
 use std::time::{Duration, Instant};
 
-// ----------------------------------------------------------------
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use ratatui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+    Frame, Terminal as RatatuiTerminal,
+};
+
+
 // SIMPEL TILFÆLDIG TAL-GENERATOR (LCG)
 // Vi bruger ingen eksterne crates - kun std.
 // LCG = Linear Congruential Generator: hurtig, god nok til simulation.
 // Hver tråd får sin egen instans baseret på tråd-ID + tidspunkt.
-// ----------------------------------------------------------------
+
 
 /// Trådsikker tilfældig tal-generator baseret på LCG-algoritmen.
 /// Seed opdateres atomart ved hvert kald - ingen Mutex nødvendig!
@@ -32,7 +46,7 @@ impl Rng {
     }
 
     /// Returnerer et tilfældigt u64 via LCG
-    /// Konstanter fra Knuth - velkendte gode LCG-parametre
+    /// Konstanter fra Knuth
     fn næste(&self) -> u64 {
         // fetch_update: læs → beregn → skriv atomart
         self.tilstand.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |s| {
@@ -63,9 +77,7 @@ fn ny_rng() -> Rng {
     Rng::ny(tid_ns.wrapping_mul(2654435761).wrapping_add(unik * 1234567891))
 }
 
-// ----------------------------------------------------------------
 // KONSTANTER - faste grænser der simulerer fysiske begrænsninger
-// ----------------------------------------------------------------
 
 // Maks antal bagager i sorteringsanlæggets buffer ad gangen
 const SORTERING_BUFFER_KAPACITET: usize = 20;
@@ -238,10 +250,8 @@ impl CentralServer {
                         }
                     }
                 }
-                println!("[Server] Indlæste {} reservationer fra fil.", self.reservationer.len());
             }
             Err(_) => {
-                println!("[Server] Ingen reservationsfil fundet - bruger standard testdata.");
                 self.opret_standard_reservationer();
             }
         }
@@ -359,7 +369,6 @@ impl Skranke {
     /// Logger en besked fra denne skranke
     fn log(&self, besked: &str) {
         let linje = format!("[Skranke {}] {}", self.id, besked);
-        println!("{}", linje);
         {
             let mut fil = self.log_fil.lock().unwrap();
             let _ = writeln!(fil, "{}", linje);
@@ -524,7 +533,6 @@ impl Sorteringsanlæg {
 
     fn log(&self, besked: &str) {
         let linje = format!("[Sortering] {}", besked);
-        println!("{}", linje);
         {
             let mut fil = self.log_fil.lock().unwrap();
             let _ = writeln!(fil, "{}", linje);
@@ -565,7 +573,6 @@ impl Sorteringsanlæg {
             // Logger hjælpefunktion som closure
             let log = |besked: &str| {
                 let linje = format!("[Sortering] {}", besked);
-                println!("{}", linje);
                 {
                     let mut fil = log_fil.lock().unwrap();
                     let _ = writeln!(fil, "{}", linje);
@@ -715,7 +722,6 @@ impl Terminal {
 
     fn log(&self, besked: &str) {
         let linje = format!("[Terminal {}|{}] {}", self.id, self.flight_nr, besked);
-        println!("{}", linje);
         {
             let mut fil = self.log_fil.lock().unwrap();
             let _ = writeln!(fil, "{}", linje);
@@ -752,7 +758,6 @@ impl Terminal {
         thread::spawn(move || {
             let log = |besked: &str| {
                 let linje = format!("[Terminal {}|{}] {}", terminal_id, flight_nr, besked);
-                println!("{}", linje);
                 {
                     let mut fil = log_fil.lock().unwrap();
                     let _ = writeln!(fil, "{}", linje);
@@ -856,7 +861,6 @@ fn start_flyveplan_opdaterings_tråd(
                 aktiv: true,
             });
             let linje = "[Flyveplan] Tilføjede ny afgang EK007 til terminal 4.";
-            println!("{}", linje);
             let mut fil = log_fil.lock().unwrap();
             let _ = writeln!(fil, "{}", linje);
         }
@@ -949,16 +953,19 @@ impl Simulation {
         skranke.åbn();
 
         let mut skranker = self.skranker.write().unwrap();
-        // Tjek om skranke med dette ID allerede eksisterer
         if skranker.iter().any(|s| s.id == id) {
             let linje = format!("[System] Skranke {} eksisterer allerede!", id);
-            println!("{}", linje);
+            let mut log = self.server.hændelses_log.lock().unwrap();
+            log.push(linje.clone());
+            let mut fil = self.server.log_fil.lock().unwrap();
+            let _ = writeln!(fil, "{}", linje);
             return;
         }
         skranker.push(skranke);
         let linje = format!("[System] Skranke {} tilføjet og åbnet.", id);
-        println!("{}", linje);
         {
+            let mut log = self.server.hændelses_log.lock().unwrap();
+            log.push(linje.clone());
             let mut fil = self.server.log_fil.lock().unwrap();
             let _ = writeln!(fil, "{}", linje);
         }
@@ -970,7 +977,9 @@ impl Simulation {
         if let Some(skranke) = skranker.iter().find(|s| s.id == id) {
             skranke.luk();
         } else {
-            println!("[System] Skranke {} ikke fundet.", id);
+            let linje = format!("[System] Skranke {} ikke fundet.", id);
+            let mut log = self.server.hændelses_log.lock().unwrap();
+            log.push(linje);
         }
     }
 
@@ -1056,14 +1065,15 @@ impl Simulation {
                 });
                 handles.push(handle);
             } else {
-                println!("[System] Ingen åben skranke med ID {}.", skranke_id);
+                let linje = format!("[System] Ingen åben skranke med ID {}.", skranke_id);
+                let mut log = self.server.hændelses_log.lock().unwrap();
+                log.push(linje);
             }
         }
     }
 
     /// Stopper alle tråde pænt
     fn stop_alle(&self) {
-        println!("[System] Sender stop-signal til alle tråde...");
         self.global_stop.store(true, Ordering::SeqCst);
         self.sorteringsanlæg.stop_signal.store(true, Ordering::SeqCst);
 
@@ -1111,237 +1121,442 @@ impl Simulation {
             throughput, gns_ventetid, total_behandlet, sorteret, loadet
         );
 
-        println!("{}", rapport);
         {
             let mut fil = self.server.log_fil.lock().unwrap();
             let _ = writeln!(fil, "{}", rapport);
         }
 
-        // Udskriv hvad der er loadet på hvert fly
         for terminal in &self.terminaler {
             let loaded = terminal.loadet_bagage.lock().unwrap();
-            println!(
+            let linje = format!(
                 "[Terminal {}|{}] Loadet {} stk bagage: {:?}",
                 terminal.id,
                 terminal.flight_nr,
                 loaded.len(),
                 *loaded
             );
+            let mut fil = self.server.log_fil.lock().unwrap();
+            let _ = writeln!(fil, "{}", linje);
         }
     }
 }
 
 // ----------------------------------------------------------------
-// BRUGERINPUT MENU
+// RATATUI TUI APP
 // ----------------------------------------------------------------
 
-/// Udskriver den interaktive menu
-fn udskriv_menu() {
-    println!("\n┌─────────────────────────────────────────┐");
-    println!("│   LUFTHAVN BAGAGESORTERING - MENU       │");
-    println!("├─────────────────────────────────────────┤");
-    println!("│  1. Åbn ny skranke (angiv ID)           │");
-    println!("│  2. Luk skranke (angiv ID)              │");
-    println!("│  3. Vis status (skranker/terminaler)    │");
-    println!("│  4. Kør simulering (send testbagage)    │");
-    println!("│  5. Vis statistik                       │");
-    println!("│  6. Opdatér flyveplan (se alle fly)     │");
-    println!("│  7. Afslut                              │");
-    println!("└─────────────────────────────────────────┘");
-    print!("Vælg: ");
-    // Flush stdout så prompten vises inden vi læser input
-    std::io::stdout().flush().unwrap();
+/// Input mode for TUI
+#[derive(Debug, Clone, PartialEq)]
+enum InputMode {
+    Normal,
+    ÅbnSkranke,
+    LukSkranke,
 }
 
-/// Viser nuværende status for alle skranker og terminaler
-fn vis_status(sim: &Simulation) {
-    println!("\n--- STATUS ---");
-    {
-        let skranker = sim.skranker.read().unwrap();
-        if skranker.is_empty() {
-            println!("[Skranker] Ingen skranker åbnet endnu.");
-        } else {
-            for s in skranker.iter() {
-                let status = if s.is_åben.load(Ordering::SeqCst) { "ÅBEN" } else { "LUKKET" };
-                let buf_len = s.udgående_buffer.lock().unwrap().len();
-                println!("[Skranke {}] Status: {} | Buffer: {}/{}", s.id, status, buf_len, SKRANKE_BUFFER_KAPACITET);
+/// TUI Application state
+struct App {
+    simulation: Arc<Simulation>,
+    bagage_tæller: Arc<AtomicU64>,
+    input_mode: InputMode,
+    input_buffer: String,
+    scroll_offset: u16,
+    should_quit: bool,
+}
+
+impl App {
+    fn ny(simulation: Arc<Simulation>) -> Self {
+        App {
+            simulation,
+            bagage_tæller: Arc::new(AtomicU64::new(1)),
+            input_mode: InputMode::Normal,
+            input_buffer: String::new(),
+            scroll_offset: 0,
+            should_quit: false,
+        }
+    }
+
+    fn handle_input(&mut self, key: KeyCode) {
+        match self.input_mode {
+            InputMode::Normal => {
+                match key {
+                    KeyCode::Char('q') | KeyCode::Esc => {
+                        self.should_quit = true;
+                    }
+                    KeyCode::Char('o') => {
+                        self.input_mode = InputMode::ÅbnSkranke;
+                        self.input_buffer.clear();
+                    }
+                    KeyCode::Char('c') => {
+                        self.input_mode = InputMode::LukSkranke;
+                        self.input_buffer.clear();
+                    }
+                    KeyCode::Char('r') => {
+                        self.kør_simulering();
+                    }
+                    KeyCode::Up => {
+                        self.scroll_offset = self.scroll_offset.saturating_sub(1);
+                    }
+                    KeyCode::Down => {
+                        self.scroll_offset = self.scroll_offset.saturating_add(1);
+                    }
+                    _ => {}
+                }
+            }
+            InputMode::ÅbnSkranke | InputMode::LukSkranke => {
+                match key {
+                    KeyCode::Enter => {
+                        if let Ok(id) = self.input_buffer.parse::<u32>() {
+                            if self.input_mode == InputMode::ÅbnSkranke {
+                                self.simulation.åbn_skranke(id);
+                            } else {
+                                self.simulation.luk_skranke(id);
+                            }
+                        }
+                        self.input_mode = InputMode::Normal;
+                        self.input_buffer.clear();
+                    }
+                    KeyCode::Esc => {
+                        self.input_mode = InputMode::Normal;
+                        self.input_buffer.clear();
+                    }
+                    KeyCode::Char(c) => {
+                        self.input_buffer.push(c);
+                    }
+                    KeyCode::Backspace => {
+                        self.input_buffer.pop();
+                    }
+                    _ => {}
+                }
             }
         }
     }
-    for t in &sim.terminaler {
+
+    fn kør_simulering(&self) {
+        let åbne_skranke_ids: Vec<u32> = {
+            let skranker = self.simulation.skranker.read().unwrap();
+            skranker
+                .iter()
+                .filter(|s| s.is_åben.load(Ordering::SeqCst))
+                .map(|s| s.id)
+                .collect()
+        };
+
+        if åbne_skranke_ids.is_empty() {
+            return;
+        }
+
+        let reservationer = self.simulation.server.reservationer.clone();
+        let mut bagage_assignments: Vec<(u32, Bagage)> = Vec::new();
+
+        for (idx, reservation) in reservationer.iter().enumerate() {
+            let skranke_id = åbne_skranke_ids[idx % åbne_skranke_ids.len()];
+            let bag_nr = self.bagage_tæller.fetch_add(1, Ordering::Relaxed);
+            let bagage = Bagage::ny(
+                &format!("BAG{:04}", bag_nr),
+                reservation.passager_nr,
+                &reservation.flyafgang,
+                skranke_id,
+            );
+            bagage_assignments.push((skranke_id, bagage));
+        }
+
+        self.simulation.kør_skranke_tråde(bagage_assignments);
+    }
+}
+
+/// Render TUI
+fn ui(f: &mut Frame, app: &App) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(3),
+            Constraint::Min(10),
+            Constraint::Length(3),
+        ])
+        .split(f.size());
+
+    let title = Paragraph::new("LUFTHAVN BAGAGESORTERINGSSYSTEM")
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .block(Block::default().borders(Borders::ALL));
+    f.render_widget(title, chunks[0]);
+
+    let main_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(chunks[1]);
+
+    let left_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+        .split(main_chunks[0]);
+
+    render_status(f, app, left_chunks[0]);
+    render_flyveplan(f, app, left_chunks[1]);
+
+    let right_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
+        .split(main_chunks[1]);
+
+    render_statistik(f, app, right_chunks[0]);
+    render_log(f, app, right_chunks[1]);
+
+    render_footer(f, app, chunks[2]);
+}
+
+fn render_status(f: &mut Frame, app: &App, area: Rect) {
+    let mut items = Vec::new();
+
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("SKRANKER:", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+    ])));
+
+    let skranker = app.simulation.skranker.read().unwrap();
+    if skranker.is_empty() {
+        items.push(ListItem::new("  Ingen skranker åbnet"));
+    } else {
+        for s in skranker.iter() {
+            let status = if s.is_åben.load(Ordering::SeqCst) { "ÅBEN" } else { "LUKKET" };
+            let buf_len = s.udgående_buffer.lock().unwrap().len();
+            let color = if s.is_åben.load(Ordering::SeqCst) { Color::Green } else { Color::Red };
+            items.push(ListItem::new(Line::from(vec![
+                Span::raw("  Skranke "),
+                Span::styled(format!("{}", s.id), Style::default().fg(color).add_modifier(Modifier::BOLD)),
+                Span::raw(format!(" [{}] Buffer: {}/{}", status, buf_len, SKRANKE_BUFFER_KAPACITET)),
+            ])));
+        }
+    }
+
+    items.push(ListItem::new(""));
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("TERMINALER:", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+    ])));
+
+    for t in &app.simulation.terminaler {
         let status = if t.is_åben.load(Ordering::SeqCst) { "ÅBEN" } else { "LUKKET" };
         let (buf_lås, _) = &*t.buffer;
         let buf_len = buf_lås.lock().unwrap().len();
         let loadet = t.loadet_bagage.lock().unwrap().len();
-        println!(
-            "[Terminal {}|{}] Status: {} | Buffer: {}/{} | Loadet: {}",
-            t.id, t.flight_nr, status, buf_len, TERMINAL_BUFFER_KAPACITET, loadet
-        );
+        let color = if t.is_åben.load(Ordering::SeqCst) { Color::Green } else { Color::Red };
+        items.push(ListItem::new(Line::from(vec![
+            Span::raw("  Terminal "),
+            Span::styled(format!("{}", t.id), Style::default().fg(color).add_modifier(Modifier::BOLD)),
+            Span::raw(format!(" [{}] {} | Buf: {}/{} | Loadet: {}",
+                status, t.flight_nr, buf_len, TERMINAL_BUFFER_KAPACITET, loadet)),
+        ])));
     }
-    {
-        let (sort_lås, _) = &*sim.sortering_ind_buffer;
-        let sort_len = sort_lås.lock().unwrap().len();
-        println!(
-            "[Sortering] Ind-buffer: {}/{}",
-            sort_len, SORTERING_BUFFER_KAPACITET
-        );
-    }
+
+    items.push(ListItem::new(""));
+    let (sort_lås, _) = &*app.simulation.sortering_ind_buffer;
+    let sort_len = sort_lås.lock().unwrap().len();
+    let sort_pct = (sort_len as f64 / SORTERING_BUFFER_KAPACITET as f64 * 100.0) as u16;
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("SORTERING: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+        Span::raw(format!("{}/{} ({}%)", sort_len, SORTERING_BUFFER_KAPACITET, sort_pct)),
+    ])));
+
+    let list = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("Status"));
+    f.render_widget(list, area);
 }
 
-/// Viser flyveplan
-fn vis_flyveplan(sim: &Simulation) {
-    println!("\n--- FLYVEPLAN ---");
-    let plan = sim.server.flyveplan.read().unwrap();
-    for f in plan.iter() {
-        let status = if f.aktiv { "AKTIV" } else { "INAKTIV" };
-        println!(
-            "  Fly: {} | Terminal: {} | Afgang: {} | {}",
-            f.flight_nr, f.terminal_nr, f.afgang_tid, status
-        );
-    }
+fn render_flyveplan(f: &mut Frame, app: &App, area: Rect) {
+    let plan = app.simulation.server.flyveplan.read().unwrap();
+    let items: Vec<ListItem> = plan
+        .iter()
+        .map(|fly| {
+            let status_color = if fly.aktiv { Color::Green } else { Color::Gray };
+            let status_text = if fly.aktiv { "AKTIV" } else { "INAKTIV" };
+            ListItem::new(Line::from(vec![
+                Span::styled(&fly.flight_nr, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                Span::raw(" → Terminal "),
+                Span::styled(format!("{}", fly.terminal_nr), Style::default().fg(Color::Yellow)),
+                Span::raw(format!(" | {}", fly.afgang_tid)),
+                Span::raw(" ["),
+                Span::styled(status_text, Style::default().fg(status_color)),
+                Span::raw("]"),
+            ]))
+        })
+        .collect();
+
+    let list = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("Flyveplan"));
+    f.render_widget(list, area);
+}
+
+fn render_statistik(f: &mut Frame, app: &App, area: Rect) {
+    let statistik = &app.simulation.server.statistik;
+    let throughput = statistik.throughput();
+    let gns_ventetid = statistik.gns_ventetid_ms();
+    let total_behandlet = statistik.bagage_behandlet_total.load(Ordering::Relaxed);
+    let sorteret = statistik.sortering_behandlet.load(Ordering::Relaxed);
+    let loadet = statistik.terminaler_modtaget.load(Ordering::Relaxed);
+
+    let text = vec![
+        Line::from(vec![
+            Span::styled("Throughput: ", Style::default().fg(Color::Yellow)),
+            Span::styled(format!("{:.2} bagage/sek", throughput), Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+        ]),
+        Line::from(vec![
+            Span::styled("Gns. ventetid: ", Style::default().fg(Color::Yellow)),
+            Span::raw(format!("{:.1} ms", gns_ventetid)),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("Total behandlet: ", Style::default().fg(Color::Cyan)),
+            Span::raw(format!("{} stk", total_behandlet)),
+        ]),
+        Line::from(vec![
+            Span::styled("Sorteret: ", Style::default().fg(Color::Cyan)),
+            Span::raw(format!("{} stk", sorteret)),
+        ]),
+        Line::from(vec![
+            Span::styled("Loadet på fly: ", Style::default().fg(Color::Cyan)),
+            Span::raw(format!("{} stk", loadet)),
+        ]),
+    ];
+
+    let paragraph = Paragraph::new(text)
+        .block(Block::default().borders(Borders::ALL).title("Statistik"))
+        .wrap(Wrap { trim: true });
+    f.render_widget(paragraph, area);
+}
+
+fn render_log(f: &mut Frame, app: &App, area: Rect) {
+    let log = app.simulation.server.hændelses_log.lock().unwrap();
+    let total_lines = log.len();
+    let visible_lines = area.height.saturating_sub(2) as usize;
+    let start_idx = if app.scroll_offset == 0 && total_lines > visible_lines {
+        total_lines.saturating_sub(visible_lines)
+    } else if total_lines > visible_lines {
+        total_lines.saturating_sub(visible_lines).saturating_sub(app.scroll_offset as usize)
+    } else {
+        0
+    };
+
+    let items: Vec<ListItem> = log
+        .iter()
+        .skip(start_idx)
+        .take(visible_lines)
+        .map(|line| {
+            let style = if line.contains("✓") || line.contains("ÅBNET") {
+                Style::default().fg(Color::Green)
+            } else if line.contains("⚠") || line.contains("KØ") {
+                Style::default().fg(Color::Yellow)
+            } else if line.contains("ADVARSEL") || line.contains("LUKKET") {
+                Style::default().fg(Color::Red)
+            } else if line.contains("✈") {
+                Style::default().fg(Color::Cyan)
+            } else {
+                Style::default()
+            };
+            ListItem::new(line.as_str()).style(style)
+        })
+        .collect();
+
+    let list = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title(format!("Hændelseslog ({} linjer)", total_lines)));
+    f.render_widget(list, area);
+}
+
+fn render_footer(f: &mut Frame, app: &App, area: Rect) {
+    let text = match app.input_mode {
+        InputMode::Normal => {
+            Line::from(vec![
+                Span::styled("[O]", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+                Span::raw(" Åbn skranke | "),
+                Span::styled("[C]", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+                Span::raw(" Luk skranke | "),
+                Span::styled("[R]", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                Span::raw(" Kør simulering | "),
+                Span::styled("[↑↓]", Style::default().fg(Color::Yellow)),
+                Span::raw(" Scroll log | "),
+                Span::styled("[Q/ESC]", Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)),
+                Span::raw(" Afslut"),
+            ])
+        }
+        InputMode::ÅbnSkranke => {
+            Line::from(vec![
+                Span::styled("Åbn skranke - Indtast ID: ", Style::default().fg(Color::Green)),
+                Span::styled(&app.input_buffer, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+                Span::raw(" [Enter: OK | ESC: Annuller]"),
+            ])
+        }
+        InputMode::LukSkranke => {
+            Line::from(vec![
+                Span::styled("Luk skranke - Indtast ID: ", Style::default().fg(Color::Red)),
+                Span::styled(&app.input_buffer, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+                Span::raw(" [Enter: OK | ESC: Annuller]"),
+            ])
+        }
+    };
+
+    let paragraph = Paragraph::new(text)
+        .block(Block::default().borders(Borders::ALL));
+    f.render_widget(paragraph, area);
 }
 
 // ----------------------------------------------------------------
 // MAIN
 // ----------------------------------------------------------------
 
-fn main() {
-    println!("╔════════════════════════════════════════════╗");
-    println!("║   LUFTHAVN BAGAGESORTERINGSSYSTEM i Rust   ║");
-    println!("║   Tråde + Synkronisering Demo              ║");
-    println!("╚════════════════════════════════════════════╝\n");
-
-    // Opret simulationen - log gemmes i system_log.txt
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sim = Arc::new(Simulation::ny("system_log.txt"));
 
-    // Start baggrundstråde: sortering, terminaler og flyveplan
     sim.start_sortering();
     sim.start_terminaler();
     sim.start_flyveplan_tråd();
-
-    // Start statistikmåling
     sim.server.statistik.start();
 
-    // Tæller til at give unikke bagage-numre
-    let bagage_tæller = Arc::new(AtomicU64::new(1));
+    enable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = RatatuiTerminal::new(backend)?;
+    terminal.hide_cursor()?;
 
-    println!("[System] Alle baggrundstråde startet.");
-    println!("[System] Tip: Start med at åbne skranker (valg 1), derefter kør simulering (valg 4).\n");
+    let mut app = App::ny(sim.clone());
 
-    // ---- Interaktiv menu ----
+    let tick_rate = Duration::from_millis(50);
+    let mut last_tick = Instant::now();
+
     loop {
-        udskriv_menu();
+        terminal.draw(|f| ui(f, &app))?;
 
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
-        let valg = input.trim();
-
-        match valg {
-            "1" => {
-                // Åbn ny skranke
-                print!("Angiv skranke-ID (tal): ");
-                std::io::stdout().flush().unwrap();
-                let mut id_str = String::new();
-                std::io::stdin().read_line(&mut id_str).unwrap();
-                match id_str.trim().parse::<u32>() {
-                    Ok(id) => sim.åbn_skranke(id),
-                    Err(_) => println!("Ugyldigt ID."),
+        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
+        if event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press {
+                    app.handle_input(key.code);
                 }
-            }
-
-            "2" => {
-                // Luk skranke
-                print!("Angiv skranke-ID der skal lukkes: ");
-                std::io::stdout().flush().unwrap();
-                let mut id_str = String::new();
-                std::io::stdin().read_line(&mut id_str).unwrap();
-                match id_str.trim().parse::<u32>() {
-                    Ok(id) => sim.luk_skranke(id),
-                    Err(_) => println!("Ugyldigt ID."),
-                }
-            }
-
-            "3" => {
-                vis_status(&sim);
-            }
-
-            "4" => {
-                // Kør simulering - send testbagage gennem systemet
-                // Hent åbne skranker
-                let åbne_skranke_ids: Vec<u32> = {
-                    let skranker = sim.skranker.read().unwrap();
-                    skranker
-                        .iter()
-                        .filter(|s| s.is_åben.load(Ordering::SeqCst))
-                        .map(|s| s.id)
-                        .collect()
-                };
-
-                if åbne_skranke_ids.is_empty() {
-                    println!("[System] Ingen åbne skranker! Åbn mindst én skranke først (valg 1).");
-                    continue;
-                }
-
-                println!(
-                    "[System] Kører simulering med {} åbne skranke(r): {:?}",
-                    åbne_skranke_ids.len(),
-                    åbne_skranke_ids
-                );
-
-                // Byg bagage-liste ud fra reservationer
-                // Fordeler passagerer jævnt over de åbne skranker
-                let reservationer = sim.server.reservationer.clone();
-                let mut bagage_assignments: Vec<(u32, Bagage)> = Vec::new();
-
-                for (idx, reservation) in reservationer.iter().enumerate() {
-                    // Round-robin fordeling over åbne skranker
-                    let skranke_id = åbne_skranke_ids[idx % åbne_skranke_ids.len()];
-                    let bag_nr = bagage_tæller.fetch_add(1, Ordering::Relaxed);
-                    let bagage = Bagage::ny(
-                        &format!("BAG{:04}", bag_nr),
-                        reservation.passager_nr,
-                        &reservation.flyafgang,
-                        skranke_id,
-                    );
-                    bagage_assignments.push((skranke_id, bagage));
-                }
-
-                println!(
-                    "[System] {} bagageenheder fordelt til {} skranke(r). Starter tråde...",
-                    bagage_assignments.len(),
-                    åbne_skranke_ids.len()
-                );
-
-                sim.kør_skranke_tråde(bagage_assignments);
-
-                // Vent kort så tråde kan starte
-                thread::sleep(Duration::from_millis(100));
-                println!("[System] Skranketråde startet - bagage på vej gennem systemet.");
-            }
-
-            "5" => {
-                sim.udskriv_rapport();
-            }
-
-            "6" => {
-                vis_flyveplan(&sim);
-            }
-
-            "7" | "q" | "Q" => {
-                println!("[System] Afslutter - venter på at alle tråde stopper...");
-                // Vent lidt så bagage i systemet kan behandles færdigt
-                thread::sleep(Duration::from_millis(800));
-                sim.stop_alle();
-                sim.vent_på_alle();
-                println!("\n[System] Alle tråde stoppet. Endelig rapport:");
-                sim.udskriv_rapport();
-                println!("\nFarvel! Log gemt i system_log.txt");
-                break;
-            }
-
-            _ => {
-                println!("Ukendt valg: '{}'. Prøv igen.", valg);
             }
         }
+
+        if last_tick.elapsed() >= tick_rate {
+            last_tick = Instant::now();
+        }
+
+        if app.should_quit {
+            break;
+        }
     }
+
+    terminal.clear()?;
+    terminal.show_cursor()?;
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+
+    thread::sleep(Duration::from_millis(800));
+    sim.stop_alle();
+    sim.vent_på_alle();
+
+    println!("\n[System] Alle tråde stoppet. Endelig rapport:");
+    sim.udskriv_rapport();
+    println!("\nFarvel! Log gemt i system_log.txt");
+
+    Ok(())
 }
